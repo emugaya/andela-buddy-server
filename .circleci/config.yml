@@ -1,0 +1,97 @@
+# PHP CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-php/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/php:7.1.9-browsers
+        environment:
+          APP_ENV: testing
+          APP_DEBUG: true
+          APP_KEY: SomeRandomKey!!!
+          APP_TIMEZONE: UTC
+          APP_LOCALE: en
+          APP_FALLBACK_LOCALE: en
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: andelabuddy_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: ''
+
+      - image: circleci/postgres:10
+        environment:
+          DB_DATABASE: andelabuddy
+          DB_USERNAME: postgres
+    
+      - image: redis
+
+      
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/mysql:9.4
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "composer.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run:
+          name: Install PHP Extensions 
+          command: |
+            sudo apt install -y libsqlite3-dev zlib1g-dev
+            sudo docker-php-ext-install zip
+            sudo apt-get update
+            sudo apt-get remove libpq5
+            sudo apt-get install -y libpq-dev
+            sudo docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql
+            sudo docker-php-ext-install pdo pdo_pgsql pgsql
+
+      - run:
+          name: Install Composer
+          command: | 
+            curl -sS https://getcomposer.org/installer | sudo php  -- --install-dir=/usr/local/bin --filename=composer
+            composer install -n --prefer-dist
+
+      - run:
+          name: Setup Code Climate test-reporter
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+
+      - restore_cache:
+          keys:
+            - composer-cache-{{ checksum "composer.json" }}
+            - composer-cache-
+
+      - save_cache:
+          paths:
+            - ./vendor
+          key: v1-dependencies-{{ checksum "composer.json" }}
+
+      - run:
+          name: Setup dependencies
+          command: |
+            sudo composer self-update
+            composer install -n --prefer-dist
+      - run: 
+          name: Composer tests
+          command: composer test
+          
+      - run:
+          name: Test Coverage Reporter
+          command: |
+            sudo docker-php-ext-enable xdebug
+            ./cc-test-reporter before-build
+            sudo vendor/bin/phpunit --coverage-clover clover.xml
+            ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
