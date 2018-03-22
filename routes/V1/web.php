@@ -11,6 +11,6 @@
 |
 */
 
-$router->get('/', function () use ($router) {
+$router->get('/', ['middleware' => 'auth', function () use ($router) {
     return $router->app->version();
-});
+}]);

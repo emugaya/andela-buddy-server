@@ -1,0 +1,18 @@
+engines:
+  phpmd:
+    enabled: true
+    config:
+      file_extensions: "php"
+      rulesets: "phpmd-ruleset.xml"
+  phpcodesniffer:
+    enabled: true
+    config:
+      file_extensions: "php"
+      rulesets: "phpcs-rulesets.xml"
+ratings:
+  paths:
+  - "**.php"
+exclude_paths:
+- .git/**/*
+- .github/**/*
+- vendor/**/*

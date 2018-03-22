@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Auth\Authenticatable;
 use Laravel\Lumen\Auth\Authorizable;
@@ -12,21 +12,27 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 {
     use Authenticatable, Authorizable;
 
+    protected $primaryKey = 'user_id';
+    public $incrementing = false;
+    public $timestamps = false;
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'name', 'email',
+        'user_id',
+        'email',
     ];
 
     /**
-     * The attributes excluded from the model's JSON form.
-     *
+     * User model rules
+     * 
      * @var array
      */
-    protected $hidden = [
-        'password',
+    protected $rules =[
+        'user_id' => 'required|string',
+        'email' => 'required|string'
     ];
 }
