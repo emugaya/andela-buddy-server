@@ -2,9 +2,10 @@
 
 namespace App\Providers;
 
-use App\User;
+use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Lcobucci\JWT\Parser;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -29,11 +30,22 @@ class AuthServiceProvider extends ServiceProvider
         // application. The callback which receives the incoming request instance
         // should return either a User instance or null. You're free to obtain
         // the User instance via an API token or any other method necessary.
-
         $this->app['auth']->viaRequest('api', function ($request) {
-            if ($request->input('api_token')) {
-                return User::where('api_token', $request->input('api_token'))->first();
+            $token = substr($request->header('Authorization'), 7);
+            
+            if ($token) {
+                $parsedToken = (new Parser())->parse((string) $token);
+                $user = factory(\App\Models\User::class)->make([
+                    'uid' => $parsedToken->getClaim('UserInfo')->id,
+                    'name' => $parsedToken->getClaim('UserInfo')->name,
+                    'firstname' => $parsedToken->getClaim('UserInfo')->first_name,
+                    'lastname' => $parsedToken->getClaim('UserInfo')->last_name,
+                    'email' => $parsedToken->getClaim('UserInfo')->email
+                ]);
+
+                return $user;
             }
+            return null;
         });
     }
 }
