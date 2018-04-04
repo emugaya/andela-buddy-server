@@ -8,6 +8,7 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/php:7.1.9-browsers
+      - image: circleci/postgres:10
         environment:
           APP_ENV: testing
           APP_DEBUG: true
@@ -21,14 +22,8 @@ jobs:
           DB_USERNAME: postgres
           DB_PASSWORD: ''
 
-      - image: circleci/postgres:10
-        environment:
-          DB_DATABASE: andelabuddy
-          DB_USERNAME: postgres
-    
       - image: redis
 
-      
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
@@ -47,7 +42,7 @@ jobs:
           - v1-dependencies-
 
       - run:
-          name: Install PHP Extensions 
+          name: Install PHP Extensions
           command: |
             sudo apt install -y libsqlite3-dev zlib1g-dev
             sudo docker-php-ext-install zip
@@ -58,8 +53,14 @@ jobs:
             sudo docker-php-ext-install pdo pdo_pgsql pgsql
 
       - run:
+          name: Setup Database
+          command: |
+            php artisan migrate
+            php artisan db:seed
+
+      - run:
           name: Install Composer
-          command: | 
+          command: |
             curl -sS https://getcomposer.org/installer | sudo php  -- --install-dir=/usr/local/bin --filename=composer
             composer install -n --prefer-dist
 
@@ -84,10 +85,10 @@ jobs:
           command: |
             sudo composer self-update
             composer install -n --prefer-dist
-      - run: 
+      - run:
           name: Composer tests
           command: composer test
-          
+
       - run:
           name: Test Coverage Reporter
           command: |

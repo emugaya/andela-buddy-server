@@ -8,6 +8,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Laravel\Lumen\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Http\Response;
 
 class Handler extends ExceptionHandler
 {
@@ -45,6 +46,33 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $e)
     {
-        return parent::render($request, $e);
+        $response = null;
+
+        // Get the Excepiton type
+        switch ($e) {
+            case $e instanceof ConflictException:
+                $response = $this->composeJsonResponse(
+                    Response::HTTP_CONFLICT,
+                    $e->getMessage()
+                );
+                break;
+            default:
+                $response = parent::render($request, $e);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Compose http json responses
+     *
+     * @param int    $header  - Status code
+     * @param string $message - Response message.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    private function composeJsonResponse($header, $message)
+    {
+        return response()->json(["message" => $message], $header);
     }
 }
