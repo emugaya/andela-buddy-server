@@ -11,6 +11,14 @@
 |
 */
 
-$router->get('/', ['middleware' => 'auth', function () use ($router) {
+$router->get("/", ["middleware" => "auth", function () use ($router) {
     return $router->app->version();
 }]);
+
+/**
+ * Routes for the user profile.
+ */
+$router->group(["prefix" => "api/v1", "middleware" => "auth"], function ($router) {
+    $router->get("profile/get-profile", "ProfileController@getProfile");
+    $router->post("profile", "ProfileController@createProfile");
+});

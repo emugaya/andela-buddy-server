@@ -28,11 +28,21 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     /**
      * User model rules
-     * 
+     *
      * @var array
      */
     protected $rules =[
         'user_id' => 'required|string',
         'email' => 'required|string'
     ];
+
+    /**
+     * Get the profile associated with the user
+     *
+     * @return relationship
+     */
+    public function profile()
+    {
+        return $this->hasOne('App\Models\Profile', 'user_id');
+    }
 }
